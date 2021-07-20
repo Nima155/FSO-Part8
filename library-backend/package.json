@@ -1,0 +1,19 @@
+{
+	"name": "library-backend",
+	"version": "1.0.0",
+	"description": "GraphQL mini project",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "Nima Shadab",
+	"license": "ISC",
+	"dependencies": {
+		"apollo-server": "^3.0.1",
+		"dotenv": "^10.0.0",
+		"graphql": "^15.5.1",
+		"mongoose": "^5.13.3",
+		"mongoose-unique-validator": "^2.0.3",
+		"uuid": "^8.3.2"
+	}
+}
