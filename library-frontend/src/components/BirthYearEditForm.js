@@ -1,12 +1,30 @@
 import { useMutation } from "@apollo/client"
 import React, { useState } from "react"
-import { EDIT_AUTHOR, GET_AUTHORS } from "../queries"
 
+import EDIT_AUTHOR from "../graphql/mutations/editAuthor"
+import GET_AUTHORS from "../graphql/queries/authors"
 export default function BirthYearEditForm({ authors }) {
-	const [selectedAuthor, setSelectedAuthor] = useState(authors[0])
+	const [selectedAuthor, setSelectedAuthor] = useState(
+		authors.length && authors[0].name
+	)
 
 	const [editYearMutation] = useMutation(EDIT_AUTHOR, {
-		refetchQueries: [{ query: GET_AUTHORS }], // update the view by fetching all authors again
+		update: (store, { data }) => {
+			// update is called after every mutation
+			const authors = store.readQuery({ query: GET_AUTHORS })
+			store.writeQuery({
+				query: GET_AUTHORS,
+				data: {
+					...authors,
+					allAuthors: authors.allAuthors.map((ele) =>
+						ele.name === selectedAuthor
+							? { ...ele, born: data.editAuthor.born }
+							: ele
+					),
+				},
+			})
+		}, // update the view by fetching all authors again
+		onError: () => {},
 	})
 	const onSelectChange = (e) => {
 		setSelectedAuthor(e.target.value)
@@ -14,6 +32,7 @@ export default function BirthYearEditForm({ authors }) {
 
 	const submitHandler = (e) => {
 		e.preventDefault()
+
 		editYearMutation({
 			variables: {
 				name: selectedAuthor,

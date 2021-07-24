@@ -1,14 +1,64 @@
 import React, { useState } from "react"
-import { useMutation } from "@apollo/client"
-import { ADD_BOOK, GET_AUTHORS, GET_BOOKS } from "../queries"
+import { useApolloClient, useMutation } from "@apollo/client"
+import GET_BOOKS from "../graphql/queries/booksWithoutFilter"
+import GET_AUTHORS from "../graphql/queries/authors"
+import ADD_BOOK from "../graphql/mutations/createNewBook"
+import BOOK_ADDED from "../graphql/subscriptions/onBookAdded"
+import { useSubscription } from "@apollo/client"
 const NewBook = (props) => {
 	const [title, setTitle] = useState("")
-	const [author, setAuhtor] = useState("")
+	const [author, setAuthor] = useState("")
 	const [published, setPublished] = useState("")
 	const [genre, setGenre] = useState("")
 	const [genres, setGenres] = useState([])
+	const client = useApolloClient()
+
+	useSubscription(BOOK_ADDED, {
+		onSubscriptionData: ({ subscriptionData }) => {
+			// console.log(subscriptionData.data.bookAdded)
+			const dataInCache = client.readQuery({ query: GET_BOOKS })
+			if (
+				!dataInCache.allBooks.filter(
+					// preventing the same book from being added to the list twice
+					(ele) => ele.id === subscriptionData.data.bookAdded.id
+				).length
+			) {
+				const authors = client.readQuery({ query: GET_AUTHORS })
+				console.log(subscriptionData.data.bookAdded.author)
+				client.writeQuery({
+					// updating the cache...
+					query: GET_AUTHORS,
+					data: {
+						allAuthors: !authors.allAuthors.find(
+							(ele) => ele.name === subscriptionData.data.bookAdded.author.name
+						)
+							? authors.allAuthors.concat(
+									subscriptionData.data.bookAdded.author
+							  )
+							: authors.allAuthors.map((ele) =>
+									ele.id === subscriptionData.data.bookAdded.author.id
+										? { ...ele, ...subscriptionData.data.bookAdded.author }
+										: ele
+							  ),
+					},
+				})
+
+				client.writeQuery({
+					query: GET_BOOKS,
+					data: {
+						allBooks: dataInCache.allBooks.concat(
+							subscriptionData.data.bookAdded
+						),
+					},
+				})
+				window.alert(
+					`${subscriptionData.data.bookAdded.title} by ${subscriptionData.data.bookAdded.author.name} added to the database`
+				)
+			}
+		},
+	})
 	const [addBookMutation] = useMutation(ADD_BOOK, {
-		refetchQueries: [{ query: GET_BOOKS }, { query: GET_AUTHORS }], // refetch on addition so that views are updated
+		// refetchQueries: [{ query: GET_BOOKS }, { query: GET_AUTHORS }], // refetch on addition so that views are updated
 		onError: (error) => {
 			// do nothing but dont crash
 		},
@@ -24,7 +74,7 @@ const NewBook = (props) => {
 		})
 		setTitle("")
 		setPublished("")
-		setAuhtor("")
+		setAuthor("")
 		setGenres([])
 		setGenre("")
 	}
@@ -48,7 +98,7 @@ const NewBook = (props) => {
 					author
 					<input
 						value={author}
-						onChange={({ target }) => setAuhtor(target.value)}
+						onChange={({ target }) => setAuthor(target.value)}
 					/>
 				</div>
 				<div>

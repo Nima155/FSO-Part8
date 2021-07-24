@@ -1,25 +1,6 @@
 import { gql } from "@apollo/client"
 
-export const GET_AUTHORS = gql`
-	query {
-		allAuthors {
-			bookCount
-			name
-			born
-			id
-		}
-	}
-`
-export const GET_BOOKS = gql`
-	query {
-		allBooks {
-			title
-			author
-			published
-		}
-	}
-`
-export const ADD_BOOK = gql`
+const ADD_BOOK = gql`
 	mutation addBookMutation( # in order for us to be able to
 		# use dynamic variables we must also name our query or in
 		# this case mutation
@@ -38,10 +19,4 @@ export const ADD_BOOK = gql`
 		}
 	}
 `
-export const EDIT_AUTHOR = gql`
-	mutation editAuthorMutation($name: String!, $setBornTo: Int!) {
-		editAuthor(name: $name, setBornTo: $setBornTo) {
-			name
-		}
-	}
-`
+export default ADD_BOOK
